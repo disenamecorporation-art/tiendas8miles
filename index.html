@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tienda8miles | Distribuidor Oficial LOBY Venezuela</title>
+    <script>
+      (function() {
+        if (typeof window !== 'undefined') {
+          const targets = [window, globalThis, self].filter(t => typeof t !== 'undefined');
+          targets.forEach(target => {
+            try {
+              let currentFetch = target.fetch;
+              Object.defineProperty(target, 'fetch', {
+                get() {
+                  return currentFetch;
+                },
+                set(val) {
+                  currentFetch = val;
+                },
+                configurable: true,
+                enumerable: true
+              });
+            } catch (e) {
+              // Ignore failures
+            }
+          });
+
+          let customFetch = undefined;
+          window.global = new Proxy(window, {
+            get(target, prop) {
+              if (prop === 'fetch') {
+                return customFetch || target.fetch;
+              }
+              const val = target[prop];
+              if (typeof val === 'function') {
+                return val.bind(target);
+              }
+              return val;
+            },
+            set(target, prop, value) {
+              if (prop === 'fetch') {
+                customFetch = value;
+                return true;
+              }
+              try {
+                target[prop] = value;
+              } catch (e) {
+                // Ignore silent assignment errors for read-only window properties
+              }
+              return true;
+            }
+          });
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

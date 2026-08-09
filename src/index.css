@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .glass-header {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .glass-card-dark {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Force Montserrat font family everywhere with light base font-weight */
+* {
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+}
+
+body {
+  scroll-behavior: smooth;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+  font-weight: 300 !important;
+}
+
+/* Override utility font classes so Montserrat thin/light is always rendered */
+.font-mono, .font-sans, .font-serif {
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Custom scrollbar for modern sleek feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Hide scrollbar for clean carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

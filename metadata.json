@@ -1,0 +1,6 @@
+{
+  "name": "tienda8miles",
+  "description": "Tienda oficial de LOBY — Vestuario, equipos y accesorios para deporte, aventura y turismo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
