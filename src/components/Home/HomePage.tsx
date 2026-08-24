@@ -25,13 +25,13 @@ import {
   Clock
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
-import { PRODUCTS, SERVICE_HIGHLIGHTS, COMPANY_INFO } from '../../data/mockData';
+import { SERVICE_HIGHLIGHTS, COMPANY_INFO } from '../../data/mockData';
 import { ProductCard } from '../Product/ProductCard';
 import { ShineButton } from '../ui/ShineButton';
 import { HeroSection } from './HeroSection';
 
 export const HomePage: React.FC = () => {
-  const { navigateToCatalog, navigateToProduct, showToast } = useShop();
+  const { products, navigateToCatalog, navigateToProduct, showToast } = useShop();
 
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -50,8 +50,8 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  const topDiscountProducts = PRODUCTS.filter((p) => p.isTopDiscount || (p.discountPercent && p.discountPercent > 20));
-  const featuredProducts = PRODUCTS.filter((p) => p.isFeatured);
+  const topDiscountProducts = products.filter((p) => p.isTopDiscount || (p.discountPercent && p.discountPercent > 20));
+  const featuredProducts = products.filter((p) => p.isFeatured);
 
   return (
     <div className="space-y-12 pb-16">
@@ -94,7 +94,7 @@ export const HomePage: React.FC = () => {
           ref={tendenciesRef}
           className="flex gap-6 overflow-x-auto no-scrollbar pb-4 pt-1 snap-x scroll-smooth"
         >
-          {PRODUCTS.slice(0, 6).map((product) => (
+          {products.slice(0, 6).map((product) => (
             <div key={product.id} className="w-[280px] sm:w-[320px] shrink-0 snap-start">
               <ProductCard product={product} />
             </div>
@@ -275,7 +275,7 @@ export const HomePage: React.FC = () => {
           ref={activeDiscountsRef}
           className="flex gap-6 overflow-x-auto no-scrollbar pb-4 pt-1 snap-x scroll-smooth"
         >
-          {PRODUCTS.slice(4, 10).map((product) => (
+          {products.slice(4, 10).map((product) => (
             <div key={product.id} className="w-[280px] sm:w-[320px] shrink-0 snap-start">
               <ProductCard product={product} />
             </div>

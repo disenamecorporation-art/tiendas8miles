@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X, Star, ArrowRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
-import { PRODUCTS } from '../data/mockData';
 
 export const SearchModal: React.FC = () => {
-  const { isSearchOpen, setIsSearchOpen, navigateToProduct, navigateToCatalog } = useShop();
+  const { products, isSearchOpen, setIsSearchOpen, navigateToProduct, navigateToCatalog } = useShop();
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -14,7 +13,7 @@ export const SearchModal: React.FC = () => {
     }
   }, [isSearchOpen]);
 
-  const searchResults = PRODUCTS.filter((product) => {
+  const searchResults = products.filter((product) => {
     if (!query.trim()) return false;
     const q = query.toLowerCase();
     return (

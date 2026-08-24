@@ -22,6 +22,7 @@ import { ShineButton } from '../ui/ShineButton';
 
 export const ProductDetailPage: React.FC = () => {
   const {
+    products,
     selectedProductId,
     addToCart,
     wishlist,
@@ -30,30 +31,39 @@ export const ProductDetailPage: React.FC = () => {
     navigateToCatalog,
   } = useShop();
 
-  const product = PRODUCTS.find((p) => p.id === selectedProductId) || PRODUCTS[0];
+  const product = products.find((p) => p.id === selectedProductId) || products[0];
 
-  const [activeImage, setActiveImage] = useState(product.images[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 'Única');
+  const [activeImage, setActiveImage] = useState(product?.images?.[0] || '');
+  const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || 'Única');
   const [selectedColor, setSelectedColor] = useState(
-    product.colors[0] || { name: 'Estándar', hex: '#1E293B' }
+    product?.colors?.[0] || { name: 'Estándar', hex: '#1E293B' }
   );
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'shipping'>('desc');
 
-  const isFavorite = wishlist.includes(product.id);
+  const isFavorite = product ? wishlist.includes(product.id) : false;
 
   // Related products in same category
-  const relatedProducts = PRODUCTS.filter(
-    (p) => p.category === product.category && p.id !== product.id
-  ).slice(0, 4);
+  const relatedProducts = product
+    ? products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4)
+    : [];
 
   const generateWhatsAppInquiry = () => {
+    if (!product) return '';
     const message = `*¡Hola tienda8miles! Me interesa obtener más información sobre este producto:*%0A%0A• *${product.name}*%0A• *Precio:* $${product.price.toFixed(2)} USD%0A• *Talla seleccionada:* ${selectedSize}%0A• *Color:* ${selectedColor.name}%0A%0A_Enviado desde tienda8miles_`;
     return `https://wa.me/584241324497?text=${message}`;
   };
 
+  if (!product) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <p className="text-slate-500 font-medium">Producto no encontrado</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+    <div key={product.id} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500">
         <button onClick={() => setCurrentRoute('home')} className="hover:text-slate-900">
