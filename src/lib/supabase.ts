@@ -10,8 +10,10 @@ const STORAGE_KEY_URL = 'loby_supabase_url';
 const STORAGE_KEY_KEY = 'loby_supabase_anon_key';
 
 export function getSupabaseConfig(): SupabaseConfig {
-  const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
-  const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+  // @ts-ignore
+  const envUrl = import.meta.env?.VITE_SUPABASE_URL;
+  // @ts-ignore
+  const envKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
   if (envUrl && envKey) {
     return { url: envUrl, anonKey: envKey };
   }

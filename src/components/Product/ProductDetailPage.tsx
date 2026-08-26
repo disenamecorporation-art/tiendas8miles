@@ -50,8 +50,8 @@ export const ProductDetailPage: React.FC = () => {
 
   const generateWhatsAppInquiry = () => {
     if (!product) return '';
-    const message = `*¡Hola tienda8miles! Me interesa obtener más información sobre este producto:*%0A%0A• *${product.name}*%0A• *Precio:* $${product.price.toFixed(2)} USD%0A• *Talla seleccionada:* ${selectedSize}%0A• *Color:* ${selectedColor.name}%0A%0A_Enviado desde tienda8miles_`;
-    return `https://wa.me/584241324497?text=${message}`;
+    const text = `*¡Hola tienda8miles! Me interesa obtener más información sobre este producto:*\n\n• *${product.name}*\n• *Precio:* $${product.price.toFixed(2)} USD\n• *Talla seleccionada:* ${selectedSize}\n• *Color:* ${selectedColor.name}\n\n_Enviado desde tienda8miles_`;
+    return `https://wa.me/584241324497?text=${encodeURIComponent(text)}`;
   };
 
   if (!product) {

@@ -22,15 +22,15 @@ export const CartDrawer: React.FC = () => {
 
   // Format WhatsApp checkout link
   const generateWhatsAppCheckoutLink = () => {
-    let message = `*¡Hola tienda8miles! Quiero realizar el siguiente pedido:*%0A%0A`;
+    let text = `*¡Hola tienda8miles! Quiero realizar el siguiente pedido:*\n\n`;
     cart.forEach((item, idx) => {
-      message += `${idx + 1}. *${item.product.name}*%0A`;
-      message += `   • Talla: ${item.selectedSize} | Color: ${item.selectedColor.name}%0A`;
-      message += `   • Cantidad: ${item.quantity} x $${item.product.price.toFixed(2)} = *$${(item.product.price * item.quantity).toFixed(2)}*%0A%0A`;
+      text += `${idx + 1}. *${item.product.name}*\n`;
+      text += `   • Talla: ${item.selectedSize} | Color: ${item.selectedColor.name}\n`;
+      text += `   • Cantidad: ${item.quantity} x $${item.product.price.toFixed(2)} = *$${(item.product.price * item.quantity).toFixed(2)}*\n\n`;
     });
-    message += `*Total a Pagar:* *$${(cartTotal + shippingFee).toFixed(2)} USD*%0A`;
-    message += `%0A_Enviado desde la web tienda8miles. RIF ${COMPANY_INFO.rif}_`;
-    return `https://wa.me/584241324497?text=${message}`;
+    text += `*Total a Pagar:* *$${(cartTotal + shippingFee).toFixed(2)} USD*\n`;
+    text += `\n_Enviado desde la web tienda8miles. RIF ${COMPANY_INFO.rif}_`;
+    return `https://wa.me/584241324497?text=${encodeURIComponent(text)}`;
   };
 
   return (

@@ -473,6 +473,20 @@ export const AdminPanelPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* WARNING ALERT FOR LOCAL STORAGE VS SHARED DB */}
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-1.5">
+                <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                  ⚠️ Sincronización entre múltiples dispositivos
+                </p>
+                <p className="leading-relaxed">
+                  Si guardas las credenciales usando el formulario a continuación, éstas se guardarán <strong>únicamente en este navegador</strong>. Para que tu catálogo y categorías se sincronicen de forma automática en <strong>todos los dispositivos de tus clientes y colaboradores</strong>, debes añadir las siguientes variables de entorno en la configuración de tu plataforma de despliegue (como el panel de control de <strong>Netlify</strong>):
+                </p>
+                <div className="font-mono bg-white/70 p-2.5 rounded-xl border border-amber-200/50 space-y-1 mt-1 text-[11px] text-slate-700">
+                  <div><strong>VITE_SUPABASE_URL</strong> = <span className="text-slate-500">[Tu URL de Supabase]</span></div>
+                  <div><strong>VITE_SUPABASE_ANON_KEY</strong> = <span className="text-slate-500">[Tu Anon Key de Supabase]</span></div>
+                </div>
+              </div>
+
               <form onSubmit={handleSaveSupabase} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">

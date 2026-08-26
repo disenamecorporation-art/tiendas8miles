@@ -31,19 +31,19 @@ export const CheckoutModal: React.FC = () => {
   };
 
   const getWhatsAppOrderText = () => {
-    let msg = `*¡NUEVO PEDIDO DESDE TIENDA8MILES!*%0A%0A`;
-    msg += `*Cliente:* ${formData.fullName}%0A`;
-    msg += `*Teléfono:* ${formData.phone}%0A`;
-    msg += `*Destino:* ${formData.city}, ${formData.state} (Agencia: ${formData.agency})%0A`;
-    msg += `*Dirección:* ${formData.address}%0A`;
-    msg += `*Método de Pago:* ${formData.paymentMethod.toUpperCase()}%0A%0A`;
-    msg += `*PRODUCTOS SOLICITADOS:*%0A`;
+    let text = `*¡NUEVO PEDIDO DESDE TIENDA8MILES!*\n\n`;
+    text += `*Cliente:* ${formData.fullName}\n`;
+    text += `*Teléfono:* ${formData.phone}\n`;
+    text += `*Destino:* ${formData.city}, ${formData.state} (Agencia: ${formData.agency})\n`;
+    text += `*Dirección:* ${formData.address}\n`;
+    text += `*Método de Pago:* ${formData.paymentMethod.toUpperCase()}\n\n`;
+    text += `*PRODUCTOS SOLICITADOS:*\n`;
     cart.forEach((item, idx) => {
-      msg += `${idx + 1}. ${item.product.name}%0A   Talla: ${item.selectedSize} | Color: ${item.selectedColor.name} | Cantidad: ${item.quantity} x $${item.product.price.toFixed(2)}%0A`;
+      text += `${idx + 1}. ${item.product.name}\n   Talla: ${item.selectedSize} | Color: ${item.selectedColor.name} | Cantidad: ${item.quantity} x $${item.product.price.toFixed(2)}\n`;
     });
-    msg += `%0A*Monto Total:* *$${finalTotal.toFixed(2)} USD*%0A`;
-    msg += `_RIF ${COMPANY_INFO.rif}_`;
-    return `https://wa.me/584241324497?text=${msg}`;
+    text += `\n*Monto Total:* *$${finalTotal.toFixed(2)} USD*\n`;
+    text += `_RIF ${COMPANY_INFO.rif}_`;
+    return `https://wa.me/584241324497?text=${encodeURIComponent(text)}`;
   };
 
   if (cart.length === 0 && !isCompleted) {
