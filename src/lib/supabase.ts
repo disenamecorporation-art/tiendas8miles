@@ -43,6 +43,24 @@ let cachedClient: SupabaseClient | null = null;
 let lastUrl = '';
 let lastKey = '';
 
+export async function loadSupabaseConfigFromServer(): Promise<SupabaseConfig> {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url && data.anonKey) {
+        localStorage.setItem(STORAGE_KEY_URL, data.url.trim());
+        localStorage.setItem(STORAGE_KEY_KEY, data.anonKey.trim());
+        cachedClient = null;
+        return { url: data.url.trim(), anonKey: data.anonKey.trim() };
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load custom Supabase config from server, using local instead:", err);
+  }
+  return getSupabaseConfig();
+}
+
 export function getSupabaseClient(): SupabaseClient | null {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey) return null;

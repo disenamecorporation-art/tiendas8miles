@@ -3,6 +3,7 @@ import { CartItem, Category, FilterState, Product, Route, ToastNotification, Use
 import { CATEGORIES as INITIAL_CATEGORIES, PRODUCTS as INITIAL_PRODUCTS } from '../data/mockData';
 import { 
   getSupabaseConfig, 
+  loadSupabaseConfigFromServer,
   fetchProductsFromSupabase,
   fetchCategoriesFromSupabase,
   upsertProductToSupabase,
@@ -163,9 +164,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Auto-fetch products and categories from Supabase on mount
   useEffect(() => {
     async function syncRemoteData() {
-      const { url, anonKey } = getSupabaseConfig();
-      if (url && anonKey) {
-        try {
+      try {
+        const { url, anonKey } = await loadSupabaseConfigFromServer();
+        if (url && anonKey) {
           const remoteProducts = await fetchProductsFromSupabase(url, anonKey);
           if (remoteProducts && remoteProducts.length > 0) {
             setProducts(remoteProducts);
@@ -181,9 +182,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(sessionUser);
             console.log('Synchronized Supabase user session:', sessionUser);
           }
-        } catch (e) {
-          console.error('Error syncing remote data with Supabase:', e);
         }
+      } catch (e) {
+        console.error('Error syncing remote data with Supabase:', e);
       }
     }
     syncRemoteData();

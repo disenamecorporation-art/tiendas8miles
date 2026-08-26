@@ -91,10 +91,24 @@ export const AdminPanelPage: React.FC = () => {
     }
   };
 
-  const handleSaveSupabase = (e: React.FormEvent) => {
+  const handleSaveSupabase = async (e: React.FormEvent) => {
     e.preventDefault();
     saveSupabaseConfig(supabaseUrl, supabaseKey);
-    setSupabaseStatus({ testing: false, success: true, message: '¡Credenciales de Supabase guardadas correctamente en este navegador!' });
+    setSupabaseStatus({ testing: true, message: 'Guardando credenciales en el servidor para sincronizar otros dispositivos...' });
+    try {
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: supabaseUrl, anonKey: supabaseKey }),
+      });
+      if (response.ok) {
+        setSupabaseStatus({ testing: false, success: true, message: '¡Credenciales de Supabase guardadas correctamente en este navegador y persistidas en el servidor! Ahora todos los dispositivos sincronizarán automáticamente.' });
+      } else {
+        setSupabaseStatus({ testing: false, success: true, message: 'Guardado localmente en este navegador. (Nota: El servidor no persistió los datos).' });
+      }
+    } catch (err) {
+      setSupabaseStatus({ testing: false, success: true, message: 'Guardado localmente en este navegador. (Nota: El servidor no persistió los datos).' });
+    }
   };
 
   const handleTestSupabase = async () => {
