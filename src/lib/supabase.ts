@@ -255,16 +255,25 @@ export async function upsertProductToSupabase(product: Product): Promise<boolean
       const msg = error.message || '';
       console.warn(`Supabase upsert warning (attempt ${attempts + 1}):`, msg);
 
-      // Extract and delete missing column if Postgres rejects it
+      // Extract and delete missing column if Postgres/PostgREST rejects it
+      let offendingColumn: string | null = null;
       if (msg.includes('column') && msg.includes('does not exist')) {
         const match = msg.match(/column "([^"]+)"/);
         if (match && match[1]) {
-          const offendingColumn = match[1];
-          console.log(`Removing unsupported product column from payload: ${offendingColumn}`);
-          delete payload[offendingColumn];
-          attempts++;
-          continue;
+          offendingColumn = match[1];
         }
+      } else if (msg.includes('Could not find') && msg.includes('column')) {
+        const match = msg.match(/Could not find the '([^']+)' column/);
+        if (match && match[1]) {
+          offendingColumn = match[1];
+        }
+      }
+
+      if (offendingColumn) {
+        console.log(`Removing unsupported product column from payload: ${offendingColumn}`);
+        delete payload[offendingColumn];
+        attempts++;
+        continue;
       }
       throw error;
     } catch (err) {
@@ -318,15 +327,25 @@ export async function upsertCategoryToSupabase(category: Category): Promise<bool
       const msg = error.message || '';
       console.warn(`Supabase category upsert warning (attempt ${attempts + 1}):`, msg);
 
+      // Extract and delete missing column if Postgres/PostgREST rejects it
+      let offendingColumn: string | null = null;
       if (msg.includes('column') && msg.includes('does not exist')) {
         const match = msg.match(/column "([^"]+)"/);
         if (match && match[1]) {
-          const offendingColumn = match[1];
-          console.log(`Removing unsupported category column from payload: ${offendingColumn}`);
-          delete payload[offendingColumn];
-          attempts++;
-          continue;
+          offendingColumn = match[1];
         }
+      } else if (msg.includes('Could not find') && msg.includes('column')) {
+        const match = msg.match(/Could not find the '([^']+)' column/);
+        if (match && match[1]) {
+          offendingColumn = match[1];
+        }
+      }
+
+      if (offendingColumn) {
+        console.log(`Removing unsupported category column from payload: ${offendingColumn}`);
+        delete payload[offendingColumn];
+        attempts++;
+        continue;
       }
       throw error;
     } catch (err) {
