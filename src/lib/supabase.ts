@@ -80,12 +80,53 @@ export async function testSupabaseConnection(url: string, anonKey: string): Prom
   }
 }
 
+function mapDbProductToReact(dbProd: any): Product {
+  return {
+    id: dbProd.id,
+    name: dbProd.name,
+    subtitle: dbProd.subtitle || '',
+    category: dbProd.category,
+    mainCategory: dbProd.main_category || dbProd.mainCategory || '',
+    subCategory: dbProd.sub_category || dbProd.subCategory || '',
+    brand: dbProd.brand,
+    price: Number(dbProd.price),
+    originalPrice: dbProd.original_price !== undefined ? Number(dbProd.original_price) : (dbProd.originalPrice !== undefined ? Number(dbProd.originalPrice) : undefined),
+    discountPercent: dbProd.discount_percent !== undefined ? Number(dbProd.discount_percent) : (dbProd.discountPercent !== undefined ? Number(dbProd.discountPercent) : undefined),
+    rating: dbProd.rating !== undefined ? Number(dbProd.rating) : 5,
+    reviewsCount: dbProd.reviews_count !== undefined ? Number(dbProd.reviews_count) : (dbProd.reviewsCount !== undefined ? Number(dbProd.reviewsCount) : 0),
+    isNew: dbProd.is_new !== undefined ? Boolean(dbProd.is_new) : (dbProd.isNew !== undefined ? Boolean(dbProd.isNew) : false),
+    isFeatured: dbProd.is_featured !== undefined ? Boolean(dbProd.is_featured) : (dbProd.isFeatured !== undefined ? Boolean(dbProd.isFeatured) : false),
+    isTopDiscount: dbProd.is_top_discount !== undefined ? Boolean(dbProd.is_top_discount) : (dbProd.isTopDiscount !== undefined ? Boolean(dbProd.isTopDiscount) : false),
+    images: Array.isArray(dbProd.images) ? dbProd.images : [],
+    sizes: Array.isArray(dbProd.sizes) ? dbProd.sizes : [],
+    colors: Array.isArray(dbProd.colors) ? dbProd.colors : [],
+    description: dbProd.description || '',
+    features: Array.isArray(dbProd.features) ? dbProd.features : [],
+    techSpecs: dbProd.tech_specs || dbProd.techSpecs || {},
+    inStock: dbProd.in_stock !== undefined ? Boolean(dbProd.in_stock) : (dbProd.inStock !== undefined ? Boolean(dbProd.inStock) : true),
+    tags: Array.isArray(dbProd.tags) ? dbProd.tags : [],
+  };
+}
+
+function mapDbCategoryToReact(dbCat: any): Category {
+  return {
+    id: dbCat.id,
+    name: dbCat.name,
+    slug: dbCat.slug,
+    iconName: dbCat.icon_name || dbCat.iconName || 'ShoppingBag',
+    image: dbCat.image || '',
+    itemCount: dbCat.item_count !== undefined ? Number(dbCat.item_count) : (dbCat.itemCount !== undefined ? Number(dbCat.itemCount) : 0),
+    description: dbCat.description || '',
+    subcategories: dbCat.sub_categories || dbCat.subcategories || [],
+  };
+}
+
 export async function fetchProductsFromSupabase(url: string, anonKey: string): Promise<any[] | null> {
   try {
     const client = createClient(url.trim(), anonKey.trim());
     const { data, error } = await client.from('products').select('*');
     if (error) throw error;
-    return data || [];
+    return (data || []).map(mapDbProductToReact);
   } catch (err) {
     console.error('Error fetching products from Supabase:', err);
     return null;
@@ -110,7 +151,7 @@ export async function fetchCategoriesFromSupabase(): Promise<Category[] | null> 
   try {
     const { data, error } = await client.from('categories').select('*');
     if (error) throw error;
-    return (data as Category[]) || [];
+    return (data || []).map(mapDbCategoryToReact);
   } catch (err) {
     console.error('Error fetching categories from Supabase:', err);
     return null;
@@ -120,14 +161,74 @@ export async function fetchCategoriesFromSupabase(): Promise<Category[] | null> 
 export async function upsertProductToSupabase(product: Product): Promise<boolean> {
   const client = getSupabaseClient();
   if (!client) return false;
-  try {
-    const { error } = await client.from('products').upsert(product);
-    if (error) throw error;
-    return true;
-  } catch (err) {
-    console.error('Error upserting product to Supabase:', err);
-    return false;
+  
+  // Build a tolerant payload that supports both snake_case and camelCase schemas
+  const payload: any = {
+    id: product.id,
+    name: product.name,
+    subtitle: product.subtitle || null,
+    category: product.category,
+    brand: product.brand,
+    price: product.price,
+    originalPrice: product.originalPrice || null,
+    original_price: product.originalPrice || null,
+    discountPercent: product.discountPercent || null,
+    discount_percent: product.discountPercent || null,
+    rating: product.rating || 5,
+    reviewsCount: product.reviewsCount || 0,
+    reviews_count: product.reviewsCount || 0,
+    isNew: product.isNew ?? false,
+    is_new: product.isNew ?? false,
+    isFeatured: product.isFeatured ?? false,
+    is_featured: product.isFeatured ?? false,
+    isTopDiscount: product.isTopDiscount ?? false,
+    is_top_discount: product.isTopDiscount ?? false,
+    images: product.images || [],
+    sizes: product.sizes || [],
+    colors: product.colors || [],
+    description: product.description || '',
+    features: product.features || [],
+    techSpecs: product.techSpecs || {},
+    tech_specs: product.techSpecs || {},
+    inStock: product.inStock ?? true,
+    in_stock: product.inStock ?? true,
+    tags: product.tags || [],
+    mainCategory: product.mainCategory || null,
+    main_category: product.mainCategory || null,
+    subCategory: product.subCategory || null,
+    sub_category: product.subCategory || null,
+  };
+
+  let attempts = 0;
+  while (attempts < 15) {
+    try {
+      const { error } = await client.from('products').upsert(payload);
+      if (!error) {
+        console.log('Successfully upserted product to Supabase:', product.name);
+        return true;
+      }
+
+      const msg = error.message || '';
+      console.warn(`Supabase upsert warning (attempt ${attempts + 1}):`, msg);
+
+      // Extract and delete missing column if Postgres rejects it
+      if (msg.includes('column') && msg.includes('does not exist')) {
+        const match = msg.match(/column "([^"]+)"/);
+        if (match && match[1]) {
+          const offendingColumn = match[1];
+          console.log(`Removing unsupported product column from payload: ${offendingColumn}`);
+          delete payload[offendingColumn];
+          attempts++;
+          continue;
+        }
+      }
+      throw error;
+    } catch (err) {
+      console.error('Failed to upsert product to Supabase:', err);
+      return false;
+    }
   }
+  return false;
 }
 
 export async function deleteProductFromSupabase(id: string): Promise<boolean> {
@@ -146,14 +247,50 @@ export async function deleteProductFromSupabase(id: string): Promise<boolean> {
 export async function upsertCategoryToSupabase(category: Category): Promise<boolean> {
   const client = getSupabaseClient();
   if (!client) return false;
-  try {
-    const { error } = await client.from('categories').upsert(category);
-    if (error) throw error;
-    return true;
-  } catch (err) {
-    console.error('Error upserting category to Supabase:', err);
-    return false;
+  
+  const payload: any = {
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    iconName: category.iconName,
+    icon_name: category.iconName,
+    image: category.image || null,
+    itemCount: category.itemCount || 0,
+    item_count: category.itemCount || 0,
+    description: category.description || null,
+    subcategories: category.subcategories || [],
+    sub_categories: category.subcategories || [],
+  };
+
+  let attempts = 0;
+  while (attempts < 10) {
+    try {
+      const { error } = await client.from('categories').upsert(payload);
+      if (!error) {
+        console.log('Successfully upserted category to Supabase:', category.name);
+        return true;
+      }
+
+      const msg = error.message || '';
+      console.warn(`Supabase category upsert warning (attempt ${attempts + 1}):`, msg);
+
+      if (msg.includes('column') && msg.includes('does not exist')) {
+        const match = msg.match(/column "([^"]+)"/);
+        if (match && match[1]) {
+          const offendingColumn = match[1];
+          console.log(`Removing unsupported category column from payload: ${offendingColumn}`);
+          delete payload[offendingColumn];
+          attempts++;
+          continue;
+        }
+      }
+      throw error;
+    } catch (err) {
+      console.error('Error upserting category to Supabase:', err);
+      return false;
+    }
   }
+  return false;
 }
 
 export async function deleteCategoryFromSupabase(id: string): Promise<boolean> {

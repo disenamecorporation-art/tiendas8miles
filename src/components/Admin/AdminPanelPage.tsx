@@ -574,21 +574,45 @@ export const AdminPanelPage: React.FC = () => {
                 <p className="text-xs text-slate-600">
                   Para habilitar almacenamiento persistente en tu base de datos Supabase PostgreSQL, ejecuta el siguiente comando SQL en tu <span className="font-bold">Supabase SQL Editor</span>:
                 </p>
-                <pre className="p-3 bg-slate-900 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto">
-{`CREATE TABLE IF NOT EXISTS products (
+                <pre className="p-3 bg-slate-900 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto whitespace-pre">
+{`-- 1. Tabla de Productos
+CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   subtitle TEXT,
   category TEXT NOT NULL,
+  main_category TEXT,
+  sub_category TEXT,
   brand TEXT NOT NULL,
   price NUMERIC NOT NULL,
   original_price NUMERIC,
-  images TEXT[],
-  description TEXT,
-  sizes TEXT[],
-  in_stock BOOLEAN DEFAULT true,
+  discount_percent NUMERIC,
+  rating NUMERIC DEFAULT 5,
+  reviews_count NUMERIC DEFAULT 0,
   is_new BOOLEAN DEFAULT false,
   is_featured BOOLEAN DEFAULT false,
+  is_top_discount BOOLEAN DEFAULT false,
+  images TEXT[],
+  sizes TEXT[],
+  colors JSONB DEFAULT '[]'::jsonb,
+  description TEXT,
+  features TEXT[],
+  tech_specs JSONB DEFAULT '{}'::jsonb,
+  in_stock BOOLEAN DEFAULT true,
+  tags TEXT[],
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Tabla de Categorías
+CREATE TABLE IF NOT EXISTS categories (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  icon_name TEXT,
+  image TEXT,
+  item_count NUMERIC DEFAULT 0,
+  description TEXT,
+  sub_categories JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );`}
                 </pre>
