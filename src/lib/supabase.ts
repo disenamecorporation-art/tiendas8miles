@@ -6,23 +6,13 @@ export interface SupabaseConfig {
   anonKey: string;
 }
 
-const STORAGE_KEY_URL = 'loby_supabase_url';
-const STORAGE_KEY_KEY = 'loby_supabase_anon_key';
-
 export function getSupabaseConfig(): SupabaseConfig {
-  let url = localStorage.getItem(STORAGE_KEY_URL);
-  let anonKey = localStorage.getItem(STORAGE_KEY_KEY);
-  
-  if (url && anonKey) {
-    return { url, anonKey };
-  }
-
   // @ts-ignore
   const envUrl = import.meta.env?.VITE_SUPABASE_URL;
   // @ts-ignore
   const envKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
   if (envUrl && envKey) {
-    return { url: envUrl, anonKey: envKey };
+    return { url: envUrl.trim(), anonKey: envKey.trim() };
   }
 
   const defaultUrl = 'https://mkjxewpobfjgrytvnlib.supabase.co';
@@ -32,13 +22,11 @@ export function getSupabaseConfig(): SupabaseConfig {
 }
 
 export function saveSupabaseConfig(url: string, anonKey: string) {
-  localStorage.setItem(STORAGE_KEY_URL, url.trim());
-  localStorage.setItem(STORAGE_KEY_KEY, anonKey.trim());
+  // Do nothing, UI settings are removed
 }
 
 export function clearSupabaseConfig() {
-  localStorage.removeItem(STORAGE_KEY_URL);
-  localStorage.removeItem(STORAGE_KEY_KEY);
+  // Do nothing, UI settings are removed
 }
 
 let cachedClient: SupabaseClient | null = null;
@@ -49,16 +37,17 @@ export async function loadSupabaseConfigFromServer(): Promise<SupabaseConfig> {
   try {
     const res = await fetch('/api/config');
     if (res.ok) {
-      const data = await res.json();
-      if (data.url && data.anonKey) {
-        localStorage.setItem(STORAGE_KEY_URL, data.url.trim());
-        localStorage.setItem(STORAGE_KEY_KEY, data.anonKey.trim());
-        cachedClient = null;
-        return { url: data.url.trim(), anonKey: data.anonKey.trim() };
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        if (data.url && data.anonKey) {
+          cachedClient = null;
+          return { url: data.url.trim(), anonKey: data.anonKey.trim() };
+        }
       }
     }
   } catch (err) {
-    console.error("Failed to load custom Supabase config from server, using local instead:", err);
+    console.error("Failed to load custom Supabase config from server:", err);
   }
   return getSupabaseConfig();
 }
