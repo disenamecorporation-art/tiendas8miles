@@ -6,7 +6,14 @@ export interface SupabaseConfig {
   anonKey: string;
 }
 
+let memoryUrl: string | null = null;
+let memoryKey: string | null = null;
+
 export function getSupabaseConfig(): SupabaseConfig {
+  if (memoryUrl && memoryKey) {
+    return { url: memoryUrl, anonKey: memoryKey };
+  }
+
   // @ts-ignore
   const envUrl = import.meta.env?.VITE_SUPABASE_URL;
   // @ts-ignore
@@ -22,11 +29,15 @@ export function getSupabaseConfig(): SupabaseConfig {
 }
 
 export function saveSupabaseConfig(url: string, anonKey: string) {
-  // Do nothing, UI settings are removed
+  memoryUrl = url.trim();
+  memoryKey = anonKey.trim();
+  cachedClient = null;
 }
 
 export function clearSupabaseConfig() {
-  // Do nothing, UI settings are removed
+  memoryUrl = null;
+  memoryKey = null;
+  cachedClient = null;
 }
 
 let cachedClient: SupabaseClient | null = null;
@@ -41,8 +52,10 @@ export async function loadSupabaseConfigFromServer(): Promise<SupabaseConfig> {
       if (contentType && contentType.includes("application/json")) {
         const data = await res.json();
         if (data.url && data.anonKey) {
+          memoryUrl = data.url.trim();
+          memoryKey = data.anonKey.trim();
           cachedClient = null;
-          return { url: data.url.trim(), anonKey: data.anonKey.trim() };
+          return { url: memoryUrl, anonKey: memoryKey };
         }
       }
     }
