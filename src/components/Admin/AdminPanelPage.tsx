@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { Category, Product, SubCategory } from '../../types';
-import { getSupabaseConfig, saveSupabaseConfig, testSupabaseConnection, fetchProductsFromSupabase } from '../../lib/supabase';
+import { getSupabaseConfig, saveSupabaseConfig, testSupabaseConnection, fetchProductsFromSupabase, upsertProductToSupabase, upsertCategoryToSupabase } from '../../lib/supabase';
 
 export const AdminPanelPage: React.FC = () => {
   const {
@@ -48,6 +48,48 @@ export const AdminPanelPage: React.FC = () => {
   const [supabaseKey, setSupabaseKey] = useState(() => getSupabaseConfig().anonKey);
   const [supabaseStatus, setSupabaseStatus] = useState<{ testing: boolean; success?: boolean; message?: string }>({ testing: false });
   const [syncingSupabase, setSyncingSupabase] = useState(false);
+  const [uploadingLocal, setUploadingLocal] = useState(false);
+
+  const handleUploadLocalToSupabase = async () => {
+    if (!supabaseUrl || !supabaseKey) {
+      setSupabaseStatus({ testing: false, success: false, message: 'Por favor ingresa URL y Key antes de subir los datos.' });
+      return;
+    }
+    
+    setUploadingLocal(true);
+    setSupabaseStatus({ testing: false, success: true, message: 'Iniciando subida... Enviando categorías locales...' });
+    
+    let categoriesSuccessCount = 0;
+    let productsSuccessCount = 0;
+
+    for (const cat of categories) {
+      const success = await upsertCategoryToSupabase(cat);
+      if (success) categoriesSuccessCount++;
+    }
+
+    setSupabaseStatus({ testing: false, success: true, message: `Categorías subidas (${categoriesSuccessCount}/${categories.length}). Enviando productos locales...` });
+
+    for (const prod of products) {
+      const success = await upsertProductToSupabase(prod);
+      if (success) productsSuccessCount++;
+    }
+
+    setUploadingLocal(false);
+    
+    if (categoriesSuccessCount === categories.length && productsSuccessCount === products.length) {
+      setSupabaseStatus({ 
+        testing: false, 
+        success: true, 
+        message: `¡Todo subido con éxito! ${productsSuccessCount} productos y ${categoriesSuccessCount} categorías están ahora en la base de datos de Supabase y serán visibles en todos los dispositivos.` 
+      });
+    } else {
+      setSupabaseStatus({ 
+        testing: false, 
+        success: true, 
+        message: `Subida completada: ${productsSuccessCount}/${products.length} productos y ${categoriesSuccessCount}/${categories.length} categorías se guardaron correctamente en Supabase.` 
+      });
+    }
+  };
 
   const handleSaveSupabase = (e: React.FormEvent) => {
     e.preventDefault();
@@ -474,18 +516,43 @@ export const AdminPanelPage: React.FC = () => {
               </div>
 
               {/* WARNING ALERT FOR LOCAL STORAGE VS SHARED DB */}
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-1.5">
-                <p className="font-bold flex items-center gap-1.5 text-amber-900">
-                  ⚠️ Sincronización entre múltiples dispositivos
-                </p>
-                <p className="leading-relaxed">
-                  Si guardas las credenciales usando el formulario a continuación, éstas se guardarán <strong>únicamente en este navegador</strong>. Para que tu catálogo y categorías se sincronicen de forma automática en <strong>todos los dispositivos de tus clientes y colaboradores</strong>, debes añadir las siguientes variables de entorno en la configuración de tu plataforma de despliegue (como el panel de control de <strong>Netlify</strong>):
-                </p>
-                <div className="font-mono bg-white/70 p-2.5 rounded-xl border border-amber-200/50 space-y-1 mt-1 text-[11px] text-slate-700">
-                  <div><strong>VITE_SUPABASE_URL</strong> = <span className="text-slate-500">[Tu URL de Supabase]</span></div>
-                  <div><strong>VITE_SUPABASE_ANON_KEY</strong> = <span className="text-slate-500">[Tu Anon Key de Supabase]</span></div>
-                </div>
-              </div>
+              {(() => {
+                // @ts-ignore
+                const hasGlobalEnv = !!(import.meta.env?.VITE_SUPABASE_URL && import.meta.env?.VITE_SUPABASE_ANON_KEY);
+                return (
+                  <div className="space-y-4">
+                    {/* Live Detector Badge */}
+                    {hasGlobalEnv ? (
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 space-y-1">
+                        <p className="font-bold flex items-center gap-1.5 text-emerald-900">
+                          🟢 VARIABLES GLOBALES ACTIVAS (NETLIFY)
+                        </p>
+                        <p className="leading-relaxed">
+                          ¡Tu tienda está conectada globalmente! Hemos detectado las variables de entorno de <strong>Netlify</strong> en el código de producción. Todos los clientes y dispositivos que accedan a la web sincronizarán de forma 100% automática el catálogo y las categorías desde tu base de datos de Supabase.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-2">
+                        <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                          🟡 DETECTOR DE VARIABLES: COMPILACIÓN PENDIENTE EN NETLIFY
+                        </p>
+                        <p className="leading-relaxed">
+                          La aplicación <strong>todavía no puede leer</strong> tus claves desde el servidor en otros dispositivos. Si ya las añadiste en el panel de Netlify, recuerda este paso obligatorio de Vite:
+                        </p>
+                        <ol className="list-decimal pl-5 space-y-1 font-bold text-amber-900">
+                          <li>Vite inyecta las variables de entorno únicamente al compilar.</li>
+                          <li>Debes entrar a tu panel de Netlify e iniciar un <strong>Nuevo Despliegue (Trigger Deploy / Redeploy / Clear cache & deploy)</strong>.</li>
+                          <li>Al reconstruirse el sitio, tus claves se inyectarán en la tienda para que funcione en todos los celulares del mundo.</li>
+                        </ol>
+                        <div className="font-mono bg-white/70 p-2.5 rounded-xl border border-amber-200/50 space-y-1 text-[11px] text-slate-700">
+                          <div><strong>VITE_SUPABASE_URL</strong> = <span className="text-slate-500">[Configurada en Netlify]</span></div>
+                          <div><strong>VITE_SUPABASE_ANON_KEY</strong> = <span className="text-slate-500">[Configurada en Netlify]</span></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <form onSubmit={handleSaveSupabase} className="space-y-4">
                 <div>
@@ -555,17 +622,38 @@ export const AdminPanelPage: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <p className="text-xs text-slate-500">¿Tienes datos en tu tabla <code className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-800">products</code>?</p>
-                  <button
-                    type="button"
-                    onClick={handleSyncSupabase}
-                    disabled={syncingSupabase}
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors flex items-center gap-2 shadow-sm"
-                  >
-                    {syncingSupabase ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-                    <span>Sincronizar Catálogo</span>
-                  </button>
+                <div className="pt-4 border-t border-slate-100 space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">Opción A: Bajar Catálogo desde Supabase</p>
+                      <p className="text-[11px] text-slate-400">Si tu base de datos ya tiene datos y quieres traerlos a este dispositivo.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSyncSupabase}
+                      disabled={syncingSupabase}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm shrink-0"
+                    >
+                      {syncingSupabase ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                      <span>Bajar Catálogo</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pt-4 border-t border-slate-100">
+                    <div>
+                      <p className="text-xs font-bold text-emerald-800">Opción B: Subir Catálogo Local a tu nuevo Supabase</p>
+                      <p className="text-[11px] text-slate-500 font-medium">¡Ideal ahora que creaste las tablas! Sube todo tu catálogo actual de la pantalla directamente a tu base de datos de internet.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUploadLocalToSupabase}
+                      disabled={uploadingLocal}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm shrink-0"
+                    >
+                      {uploadingLocal ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                      <span>Subir Todo a Supabase</span>
+                    </button>
+                  </div>
                 </div>
               </form>
 

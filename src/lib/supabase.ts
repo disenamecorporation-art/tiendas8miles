@@ -68,13 +68,35 @@ export async function testSupabaseConnection(url: string, anonKey: string): Prom
       return { success: false, message: 'URL y Anon Key son requeridos.' };
     }
     const client = createClient(url.trim(), anonKey.trim());
-    const { error } = await client.from('products').select('id').limit(1);
-    if (error && error.code !== 'PGRST116' && !error.message.includes('does not exist')) {
-      if (error.message.includes('JWT') || error.message.includes('API key') || error.message.includes('Invalid') || error.code === 'PGRST301') {
-        return { success: false, message: `Error de Autenticación: ${error.message}` };
+    
+    // Check products table
+    const { error: prodError } = await client.from('products').select('id').limit(1);
+    if (prodError) {
+      if (prodError.message.includes('does not exist') || prodError.code === '42P01') {
+        return { 
+          success: false, 
+          message: '¡Conexión básica establecida, pero la tabla "products" NO existe en tu Supabase! Debes ejecutar el script SQL de abajo en el SQL Editor de tu panel de Supabase para crearla.' 
+        };
       }
+      if (prodError.message.includes('JWT') || prodError.message.includes('API key') || prodError.message.includes('Invalid') || prodError.code === 'PGRST301') {
+        return { success: false, message: `Error de Autenticación de Supabase (las credenciales son inválidas): ${prodError.message}` };
+      }
+      return { success: false, message: `Error al verificar la tabla "products": ${prodError.message}` };
     }
-    return { success: true, message: '¡Conexión con Supabase establecida exitosamente!' };
+
+    // Check categories table
+    const { error: catError } = await client.from('categories').select('id').limit(1);
+    if (catError) {
+      if (catError.message.includes('does not exist') || catError.code === '42P01') {
+        return { 
+          success: false, 
+          message: '¡Conexión y tabla "products" listas, pero la tabla "categories" NO existe en tu Supabase! Debes ejecutar el script SQL de abajo completo en el SQL Editor.' 
+        };
+      }
+      return { success: false, message: `Error al verificar la tabla "categories": ${catError.message}` };
+    }
+
+    return { success: true, message: '¡Conexión 100% exitosa y tablas verificadas! La sincronización está totalmente operativa.' };
   } catch (err: any) {
     return { success: false, message: err?.message || 'Error al conectar con Supabase.' };
   }
