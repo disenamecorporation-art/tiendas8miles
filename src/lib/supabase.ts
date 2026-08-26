@@ -10,6 +10,13 @@ const STORAGE_KEY_URL = 'loby_supabase_url';
 const STORAGE_KEY_KEY = 'loby_supabase_anon_key';
 
 export function getSupabaseConfig(): SupabaseConfig {
+  let url = localStorage.getItem(STORAGE_KEY_URL);
+  let anonKey = localStorage.getItem(STORAGE_KEY_KEY);
+  
+  if (url && anonKey) {
+    return { url, anonKey };
+  }
+
   // @ts-ignore
   const envUrl = import.meta.env?.VITE_SUPABASE_URL;
   // @ts-ignore
@@ -18,15 +25,10 @@ export function getSupabaseConfig(): SupabaseConfig {
     return { url: envUrl, anonKey: envKey };
   }
 
-  let url = localStorage.getItem(STORAGE_KEY_URL);
-  let anonKey = localStorage.getItem(STORAGE_KEY_KEY);
-  if (!url || !anonKey) {
-    url = 'https://mkjxewpobfjgrytvnlib.supabase.co';
-    anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ranhld3BvYmZqZ3J5dHZubGliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMzE1ODUsImV4cCI6MjEwMTgwNzU4NX0.DGtvHNS1XZ7vPhR29M6VTFE7TI_pVH55zw-YCF34cb4';
-    localStorage.setItem(STORAGE_KEY_URL, url);
-    localStorage.setItem(STORAGE_KEY_KEY, anonKey);
-  }
-  return { url, anonKey };
+  const defaultUrl = 'https://mkjxewpobfjgrytvnlib.supabase.co';
+  const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ranhld3BvYmZqZ3J5dHZubGliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMzE1ODUsImV4cCI6MjEwMTgwNzU4NX0.DGtvHNS1XZ7vPhR29M6VTFE7TI_pVH55zw-YCF34cb4';
+  
+  return { url: defaultUrl, anonKey: defaultKey };
 }
 
 export function saveSupabaseConfig(url: string, anonKey: string) {

@@ -532,7 +532,11 @@ export const AdminPanelPage: React.FC = () => {
               {/* WARNING ALERT FOR LOCAL STORAGE VS SHARED DB */}
               {(() => {
                 // @ts-ignore
-                const hasGlobalEnv = !!(import.meta.env?.VITE_SUPABASE_URL && import.meta.env?.VITE_SUPABASE_ANON_KEY);
+                const envUrl = import.meta.env?.VITE_SUPABASE_URL || '';
+                // @ts-ignore
+                const envKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+                const isDemoDb = envUrl.includes('mkjxewpobfjgrytvnlib');
+                const hasGlobalEnv = !!(envUrl && envKey && !isDemoDb);
                 return (
                   <div className="space-y-4">
                     {/* Live Detector Badge */}
@@ -542,26 +546,28 @@ export const AdminPanelPage: React.FC = () => {
                           🟢 VARIABLES GLOBALES ACTIVAS (NETLIFY)
                         </p>
                         <p className="leading-relaxed">
-                          ¡Tu tienda está conectada globalmente! Hemos detectado las variables de entorno de <strong>Netlify</strong> en el código de producción. Todos los clientes y dispositivos que accedan a la web sincronizarán de forma 100% automática el catálogo y las categorías desde tu base de datos de Supabase.
+                          ¡Tu tienda está conectada globalmente! Hemos detectado las variables de entorno de tu propio Supabase en el código de producción de <strong>Netlify</strong>. Todos los clientes y dispositivos que accedan a la web de forma externa sincronizarán automáticamente el catálogo de forma 100% automática.
                         </p>
                       </div>
                     ) : (
                       <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-2">
                         <p className="font-bold flex items-center gap-1.5 text-amber-900">
-                          🟡 DETECTOR DE VARIABLES: COMPILACIÓN PENDIENTE EN NETLIFY
+                          🟡 CONEXIÓN GLOBAL NO DETECTADA (OTRO DISPOSITIVO SE CONECTA AL DEMO)
                         </p>
                         <p className="leading-relaxed">
-                          La aplicación <strong>todavía no puede leer</strong> tus claves desde el servidor en otros dispositivos. Si ya las añadiste en el panel de Netlify, recuerda este paso obligatorio de Vite:
+                          Este dispositivo o los de tus clientes aún cargan la <strong>base de datos demo por defecto</strong> porque tus claves reales no se han integrado en el servidor de <strong>Netlify</strong>.
+                        </p>
+                        <p className="leading-relaxed">
+                          Para solucionarlo y que sea 100% automático en cualquier celular sin configurar nada, haz este paso obligatorio en Netlify:
                         </p>
                         <ol className="list-decimal pl-5 space-y-1 font-bold text-amber-900">
-                          <li>Vite inyecta las variables de entorno únicamente al compilar.</li>
-                          <li>Debes entrar a tu panel de Netlify e iniciar un <strong>Nuevo Despliegue (Trigger Deploy / Redeploy / Clear cache & deploy)</strong>.</li>
-                          <li>Al reconstruirse el sitio, tus claves se inyectarán en la tienda para que funcione en todos los celulares del mundo.</li>
+                          <li>Entra a la configuración de tu sitio en <strong>Netlify</strong> &gt; <strong>Environment Variables</strong>.</li>
+                          <li>Crea las variables <strong>VITE_SUPABASE_URL</strong> y <strong>VITE_SUPABASE_ANON_KEY</strong> con tus credenciales reales.</li>
+                          <li>Ve a <strong>Deploys</strong> y haz clic en <strong>Trigger Deploy</strong> &gt; <strong>Clear cache and deploy site</strong> para reconstruir la página.</li>
                         </ol>
-                        <div className="font-mono bg-white/70 p-2.5 rounded-xl border border-amber-200/50 space-y-1 text-[11px] text-slate-700">
-                          <div><strong>VITE_SUPABASE_URL</strong> = <span className="text-slate-500">[Configurada en Netlify]</span></div>
-                          <div><strong>VITE_SUPABASE_ANON_KEY</strong> = <span className="text-slate-500">[Configurada en Netlify]</span></div>
-                        </div>
+                        <p className="leading-relaxed pt-1 border-t border-amber-200/50">
+                          <em>Nota: Si estás probando en otro celular ahora mismo, también puedes simplemente entrar al Panel de Admin de ese celular, pegar tus claves abajo una sola vez y hacer clic en Guardar.</em>
+                        </p>
                       </div>
                     )}
                   </div>
